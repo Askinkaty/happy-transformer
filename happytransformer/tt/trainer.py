@@ -37,6 +37,9 @@ class TTTrainArgs:
     max_input_length: int = 1024
     max_output_length: int = 1024
     fp16: bool = False
+    output_dir: str = ""
+    resume_from_checkpoint: str = ""
+    generation_num_beams: int = 5
 
 
 @dataclass
@@ -64,17 +67,18 @@ class TTTestArgs:
     load_preprocessed_data: bool = False
     load_preprocessed_data_path: str = ""
 
+
 class TTTrainer(HappyTrainer):
     """
     Trainer class for HappyTextToText
     """
+
     def __init__(self, model, model_type, tokenizer, device, logger):
         super().__init__(model, model_type, tokenizer, device, logger)
         self.__max_input_length = 1024
         self.__max_output_length = 1024
 
-
-    def train(self, input_filepath, dataclass_args=TTTrainArgs):
+    def train(self, input_filepath, eval_filepath, dataclass_args=TTTrainArgs):
         """
         :param input_filepath: A file path to a csv file that contains two columns: text_1 and text_2
         :param dataclass_args: A TTTrainArgs() object
@@ -93,11 +97,18 @@ class TTTrainer(HappyTrainer):
         self.logger.info("Preprocessing training data...")
 
         dataset = load_dataset("csv", data_files={"train": input_filepath}, delimiter=",")
+        eval_dataset = load_dataset("csv", data_files={"eval": eval_filepath}, delimiter=",")
 
         self.__max_input_length = dataclass_args.max_input_length
         self.__max_output_length = dataclass_args.max_output_length
 
         tokenized_dataset = dataset.map(
+            self.__preprocess_function,
+            batched=True,
+            num_proc=dataclass_args.preprocessing_processes,
+            remove_columns=["input", "target"],
+        )
+        tokenized_eval_dataset = eval_dataset.map(
             self.__preprocess_function,
             batched=True,
             num_proc=dataclass_args.preprocessing_processes,
@@ -112,9 +123,12 @@ class TTTrainer(HappyTrainer):
         # A temp dir is used so any files that are generated are deleted after training
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             training_args = Seq2SeqTrainingArguments(
-                tmp_dir_name,
+                # tmp_dir_name,
+                output_dir=dataclass_args.output_dir,
+                resume_from_checkpoint=dataclass_args.resume_from_checkpoint,
+                generation_num_beams=dataclass_args.generation_num_beams,
                 do_train=True,
-                do_eval=False,
+                do_eval=True,
                 learning_rate=dataclass_args.learning_rate,
                 weight_decay=dataclass_args.weight_decay,
                 adam_beta1=dataclass_args.adam_beta1,
@@ -123,9 +137,12 @@ class TTTrainer(HappyTrainer):
                 max_grad_norm=dataclass_args.max_grad_norm,
                 num_train_epochs=dataclass_args.num_train_epochs,
                 report_to=["none"],
-                save_strategy="no",
+                save_strategy="steps",
+                evaluation_strategy="steps",
+                eval_steps=20000,
+                save_total_limit=2,
                 per_device_train_batch_size=dataclass_args.batch_size,
-                fp16=dataclass_args.fp16
+                fp16=dataclass_args.fp16,
 
             )
 
@@ -133,11 +150,11 @@ class TTTrainer(HappyTrainer):
                 model=self.model,
                 args=training_args,
                 train_dataset=tokenized_dataset['train'],
+                eval_dataset=tokenized_eval_dataset['eval'],
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
             )
-            trainer.train()
-
+            trainer.train(resume_from_checkpoint=dataclass_args.resume_from_checkpoint)
 
     def eval(self, input_filepath, dataclass_args=TTEvalArgs):
         """
@@ -196,8 +213,6 @@ class TTTrainer(HappyTrainer):
 
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
-
-
 
     def test(self, input_filepath, solve, args=TTTestArgs):
         raise NotImplementedError()

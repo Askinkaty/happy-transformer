@@ -3,13 +3,15 @@ Contains a class called HappyTextToText which performs text to text generation
 """
 from dataclasses import dataclass
 
-from transformers import Text2TextGenerationPipeline, AutoModelForSeq2SeqLM
+from transformers import Text2TextGenerationPipeline, AutoModelForSeq2SeqLM, LogitsProcessorList, \
+    MinLengthLogitsProcessor, BeamSearchScorer
 
 from happytransformer.happy_transformer import HappyTransformer
 from happytransformer.tt.trainer import TTTrainer
 from happytransformer.cuda_detect import detect_cuda_device_number
 from happytransformer.adaptors import get_adaptor
 from happytransformer.tt.trainer import TTTrainArgs, TTEvalArgs, TTTestArgs
+import torch
 
 
 @dataclass
@@ -19,39 +21,41 @@ class TextToTextResult:
     """
     text: str
 
+
 @dataclass
 class TTSettings:
     """
     Used to adjust the text generation algorithm that's used when
-    HappyTextToText.generate() is called 
+    HappyTextToText.generate() is called
 
     """
     min_length: int = 10
-    max_length: int = 50
-    do_sample: bool = False
+    max_length: int = 200
+    do_sample: bool = True
     early_stopping: bool = False
-    num_beams: int = 1
+    num_beams: int = 4
     temperature: float = 1
     top_k: int = 50
     no_repeat_ngram_size: int = 0
-    top_p: float = 1
+    top_p: float = 0.95
 
 
 class HappyTextToText(HappyTransformer):
     """
     A user facing class for text to text generation
     """
-    def __init__(self, model_type: str = "T5", model_name: str = "t5-small", load_path: str = "", use_auth_token: str = None):
+
+    def __init__(self, model_type: str = "T5", model_name: str = "t5-small", load_path: str = "",
+                 use_auth_token: str = None):
 
         self.adaptor = get_adaptor(model_type)
 
         if load_path != "":
-            model = AutoModelForSeq2SeqLM.from_pretrained(load_path)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(load_path)
         else:
-            model = AutoModelForSeq2SeqLM.from_pretrained(model_name, use_auth_token=use_auth_token)
+            self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name, use_auth_token=use_auth_token)
 
-
-        super().__init__(model_type, model_name, model, use_auth_token=use_auth_token, load_path=load_path)
+        super().__init__(model_type, model_name, self.model, use_auth_token=use_auth_token, load_path=load_path)
 
         device_number = detect_cuda_device_number()
 
@@ -59,7 +63,6 @@ class HappyTextToText(HappyTransformer):
                                                      tokenizer=self.tokenizer, device=device_number)
 
         self._trainer = TTTrainer(self.model, model_type, self.tokenizer, self._device, self.logger)
-
 
     def __assert_default_text_is_val(self, text):
         """
@@ -73,6 +76,28 @@ class HappyTextToText(HappyTransformer):
         if not text:
             raise ValueError("The text input must have at least one character")
 
+    def get_beam_seq(self, text: str, args: TTSettings = TTSettings()):
+        self.beam_scorer = BeamSearchScorer(batch_size=1, num_beams=args.num_beams, device=self.model.device)
+        self.logits_processor = LogitsProcessorList([MinLengthLogitsProcessor(5,
+                                                                              eos_token_id=
+                                                                              self.model.config.eos_token_id),])
+        encoding = self.tokenizer(
+            [text],
+            padding="longest",
+            max_length=args.max_length,
+            truncation=True,
+            return_tensors="pt",)
+        encoder_input_ids, attention_mask = encoding.input_ids.to("cuda"), encoding.attention_mask.to("cuda")
+        num_beams = 4
+        input_ids = torch.ones((num_beams, 1), device=self.model.device, dtype=torch.long)
+        input_ids = input_ids * self.model.config.decoder_start_token_id
+        model_kwargs = {
+            "encoder_outputs": self.model.get_encoder()(
+            encoder_input_ids.repeat_interleave(args.num_beams, dim=0), return_dict=True)}
+        outputs = self.model.beam_search(input_ids, self.beam_scorer,  output_scores=True,
+                                         logits_processor=self.logits_processor, **model_kwargs)
+        out = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        return out
 
     def generate_text(self, text: str,
                       args: TTSettings = TTSettings()) -> TextToTextResult:
@@ -95,7 +120,7 @@ class HappyTextToText(HappyTransformer):
                                 )
         return TextToTextResult(text=output[0]['generated_text'])
 
-    def train(self, input_filepath, args=TTTrainArgs()):
+    def train(self, input_filepath, eval_filepath, args=TTTrainArgs()):
         """
         Trains the text-to-text model
         input_filepath: a string that contains the location of a csv file
@@ -103,7 +128,7 @@ class HappyTextToText(HappyTransformer):
         args: A TTTrainArgs() object
         return: None
         """
-        self._trainer.train(input_filepath=input_filepath, dataclass_args=args)
+        self._trainer.train(input_filepath=input_filepath, eval_filepath=eval_filepath, dataclass_args=args)
 
     def eval(self, input_filepath, args=TTEvalArgs()):
         """
@@ -118,7 +143,6 @@ class HappyTextToText(HappyTransformer):
 
         result = self._trainer.eval(input_filepath=input_filepath, dataclass_args=args)
         return result
-
 
     def test(self, input_filepath, args=TTTestArgs):
         raise NotImplementedError("test() is currently not available")
