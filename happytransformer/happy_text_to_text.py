@@ -88,8 +88,7 @@ class HappyTextToText(HappyTransformer):
             truncation=True,
             return_tensors="pt",)
         encoder_input_ids, attention_mask = encoding.input_ids.to("cuda"), encoding.attention_mask.to("cuda")
-        num_beams = 4
-        input_ids = torch.ones((num_beams, 1), device=self.model.device, dtype=torch.long)
+        input_ids = torch.ones((args.num_beams, 1), device=self.model.device, dtype=torch.long)
         input_ids = input_ids * self.model.config.decoder_start_token_id
         model_kwargs = {
             "encoder_outputs": self.model.get_encoder()(
