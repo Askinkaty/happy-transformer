@@ -77,7 +77,8 @@ class HappyTextToText(HappyTransformer):
             raise ValueError("The text input must have at least one character")
 
     def get_beam_seq(self, text: str, args: TTSettings = TTSettings()):
-        self.beam_scorer = BeamSearchScorer(batch_size=1, num_beams=args.num_beams, device=self.model.device)
+        self.beam_scorer = BeamSearchScorer(batch_size=1, num_beams=args.num_beams, device=self.model.device,
+                                           num_beam_hyps_to_keep=args.num_beams)
         self.logits_processor = LogitsProcessorList([MinLengthLogitsProcessor(5,
                                                                               eos_token_id=
                                                                               self.model.config.eos_token_id),])
