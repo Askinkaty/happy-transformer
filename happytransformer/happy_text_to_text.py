@@ -33,7 +33,7 @@ class TTSettings:
     max_length: int = 200
     do_sample: bool = True
     early_stopping: bool = False
-    num_beams: int = 4
+    num_beams: int = 5
     temperature: float = 1
     top_k: int = 50
     no_repeat_ngram_size: int = 0
