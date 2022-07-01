@@ -42,7 +42,7 @@ class TTTrainArgs:
     generation_num_beams: int = 5
     logging_dir: str = ""
     logging_strategy: str = ""
-    logging_steps: int = 1
+    logging_steps: int = 20000
 
 
 @dataclass
@@ -60,7 +60,7 @@ class TTEvalArgs:
     max_output_length: int = 1024
     logging_dir: str = ""
     logging_strategy: str = ""
-    logging_steps: int = 1
+    logging_steps: int = 20000
 
 
 
