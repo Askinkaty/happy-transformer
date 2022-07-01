@@ -40,6 +40,9 @@ class TTTrainArgs:
     output_dir: str = ""
     resume_from_checkpoint: str = ""
     generation_num_beams: int = 5
+    logging_dir: str = ""
+    logging_strategy: str = ""
+    logging_steps: int = 20000
 
 
 @dataclass
@@ -55,6 +58,10 @@ class TTEvalArgs:
     preprocessing_processes: int = 1
     max_input_length: int = 1024
     max_output_length: int = 1024
+    logging_dir: str = ""
+    logging_strategy: str = ""
+    logging_steps: int = 20000
+
 
 
 @dataclass
@@ -140,10 +147,12 @@ class TTTrainer(HappyTrainer):
                 save_strategy="steps",
                 evaluation_strategy="steps",
                 eval_steps=20000,
-                save_total_limit=2,
+                save_total_limit=10,
                 per_device_train_batch_size=dataclass_args.batch_size,
                 fp16=dataclass_args.fp16,
-
+                logging_dir=dataclass_args.logging_dir,
+                logging_strategy="steps",
+                logging_steps=20000,
             )
 
             trainer = Seq2SeqTrainer(
@@ -154,7 +163,11 @@ class TTTrainer(HappyTrainer):
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
             )
-            trainer.train(resume_from_checkpoint=dataclass_args.resume_from_checkpoint)
+            trainer.train(resume_from_checkpoint=dataclass_args.resume_from_checkpoint,
+                          logging_dir=dataclass_args.logging_dir,
+                          logging_strategy="steps",
+                          logging_steps=20000
+                          )
 
     def eval(self, input_filepath, dataclass_args=TTEvalArgs):
         """
@@ -197,7 +210,9 @@ class TTTrainer(HappyTrainer):
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
             )
-            result = trainer.evaluate()
+            result = trainer.evaluate(logging_dir=dataclass_args.logging_dir,
+                                      logging_strategy="steps",
+                                      logging_steps=20000)
             return EvalResult(loss=result["eval_loss"])
 
     def __preprocess_function(self, examples):
