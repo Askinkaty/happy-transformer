@@ -163,11 +163,7 @@ class TTTrainer(HappyTrainer):
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
             )
-            trainer.train(resume_from_checkpoint=dataclass_args.resume_from_checkpoint,
-                          logging_dir=dataclass_args.logging_dir,
-                          logging_strategy="steps",
-                          logging_steps=20000
-                          )
+            trainer.train(resume_from_checkpoint=dataclass_args.resume_from_checkpoint)
 
     def eval(self, input_filepath, dataclass_args=TTEvalArgs):
         """
@@ -201,6 +197,12 @@ class TTTrainer(HappyTrainer):
                 seed=42,
                 report_to=["none"],
                 per_device_eval_batch_size=dataclass_args.batch_size,
+                logging_dir=dataclass_args.logging_dir,
+                logging_strategy="steps",
+                logging_steps=20000,
+                save_strategy="steps",
+                evaluation_strategy="steps",
+                eval_steps=20000,
             )
 
             trainer = Seq2SeqTrainer(
@@ -210,9 +212,7 @@ class TTTrainer(HappyTrainer):
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
             )
-            result = trainer.evaluate(logging_dir=dataclass_args.logging_dir,
-                                      logging_strategy="steps",
-                                      logging_steps=20000)
+            result = trainer.evaluate()
             return EvalResult(loss=result["eval_loss"])
 
     def __preprocess_function(self, examples):
