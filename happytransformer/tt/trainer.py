@@ -36,7 +36,8 @@ class TTTrainArgs:
     batch_size: int = 1
     max_input_length: int = 1024
     max_output_length: int = 1024
-    fp16: bool = False
+    fp16: bool = True
+    sharded_ddp: str = ""
     output_dir: str = ""
     resume_from_checkpoint: str = ""
     generation_num_beams: int = 5
@@ -153,6 +154,7 @@ class TTTrainer(HappyTrainer):
                 logging_dir=dataclass_args.logging_dir,
                 logging_strategy="steps",
                 logging_steps=20000,
+                sharded_ddp="simple"
             )
 
             trainer = Seq2SeqTrainer(
