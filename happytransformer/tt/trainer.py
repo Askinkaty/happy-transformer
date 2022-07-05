@@ -150,7 +150,7 @@ class TTTrainer(HappyTrainer):
                 eval_steps=20000,
                 save_total_limit=10,
                 per_device_train_batch_size=dataclass_args.batch_size,
-                fp16=dataclass_args.fp16,
+                fp16=True,
                 logging_dir=dataclass_args.logging_dir,
                 logging_strategy="steps",
                 logging_steps=20000,
