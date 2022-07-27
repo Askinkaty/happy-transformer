@@ -4,7 +4,7 @@ Contains a class called HappyTextToText which performs text to text generation
 from dataclasses import dataclass
 
 from transformers import Text2TextGenerationPipeline, AutoModelForSeq2SeqLM, LogitsProcessorList, \
-    MinLengthLogitsProcessor, BeamSearchScorer
+    MinLengthLogitsProcessor, BeamSearchScorer, StoppingCriteriaList, MaxLengthCriteria
 
 from happytransformer.happy_transformer import HappyTransformer
 from happytransformer.tt.trainer import TTTrainer
@@ -29,8 +29,8 @@ class TTSettings:
     HappyTextToText.generate() is called
 
     """
-    min_length: int = 10
-    max_length: int = 200
+    min_length: int = 3
+    max_length: int = 100
     do_sample: bool = True
     early_stopping: bool = False
     num_beams: int = 5
@@ -49,6 +49,7 @@ class HappyTextToText(HappyTransformer):
                  use_auth_token: str = None):
 
         self.adaptor = get_adaptor(model_type)
+        device = torch.device('cpu')
 
         if load_path != "":
             self.model = AutoModelForSeq2SeqLM.from_pretrained(load_path)
@@ -58,7 +59,6 @@ class HappyTextToText(HappyTransformer):
         super().__init__(model_type, model_name, self.model, use_auth_token=use_auth_token, load_path=load_path)
 
         device_number = detect_cuda_device_number()
-
         self._pipeline = Text2TextGenerationPipeline(model=self.model,
                                                      tokenizer=self.tokenizer, device=device_number)
 
@@ -77,6 +77,8 @@ class HappyTextToText(HappyTransformer):
             raise ValueError("The text input must have at least one character")
 
     def get_beam_seq(self, text: str, args: TTSettings = TTSettings()):
+        
+        torch.cuda.empty_cache()
         self.beam_scorer = BeamSearchScorer(batch_size=1, num_beams=args.num_beams, device=self.model.device,
                                            num_beam_hyps_to_keep=args.num_beams)
         self.logits_processor = LogitsProcessorList([MinLengthLogitsProcessor(5,
@@ -88,14 +90,16 @@ class HappyTextToText(HappyTransformer):
             max_length=args.max_length,
             truncation=True,
             return_tensors="pt",)
-        encoder_input_ids, attention_mask = encoding.input_ids.to("cpu"), encoding.attention_mask.to("cpu")
+        encoder_input_ids, attention_mask = encoding.input_ids.to("cuda"), encoding.attention_mask.to("cuda")
         input_ids = torch.ones((args.num_beams, 1), device=self.model.device, dtype=torch.long)
         input_ids = input_ids * self.model.config.decoder_start_token_id
+        stopping_criteria = StoppingCriteriaList([MaxLengthCriteria(max_length=args.max_length)])
         model_kwargs = {
             "encoder_outputs": self.model.get_encoder()(
             encoder_input_ids.repeat_interleave(args.num_beams, dim=0), return_dict=True)}
         outputs = self.model.beam_search(input_ids, self.beam_scorer,  output_scores=True,
-                                         logits_processor=self.logits_processor, **model_kwargs)
+                                         logits_processor=self.logits_processor,
+                                         stopping_criteria=stopping_criteria, **model_kwargs)
         out = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
         return out
 

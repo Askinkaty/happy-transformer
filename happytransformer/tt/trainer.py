@@ -22,7 +22,7 @@ class TTTrainArgs:
     Used to adjust the settings when calling HappyTextToText.train()
     """
     learning_rate: float = 5e-5
-    num_train_epochs: int = 3
+    num_train_epochs: int = 5
     weight_decay: float = 0
     adam_beta1: float = 0.9
     adam_beta2: float = 0.999
@@ -37,7 +37,6 @@ class TTTrainArgs:
     max_input_length: int = 1024
     max_output_length: int = 1024
     fp16: bool = True
-    sharded_ddp: str = ""
     output_dir: str = ""
     resume_from_checkpoint: str = ""
     generation_num_beams: int = 5
@@ -148,13 +147,12 @@ class TTTrainer(HappyTrainer):
                 save_strategy="steps",
                 evaluation_strategy="steps",
                 eval_steps=20000,
-                save_total_limit=10,
+                save_total_limit=5,
                 per_device_train_batch_size=dataclass_args.batch_size,
                 fp16=True,
                 logging_dir=dataclass_args.logging_dir,
                 logging_strategy="steps",
                 logging_steps=20000,
-                sharded_ddp="simple"
             )
 
             trainer = Seq2SeqTrainer(
