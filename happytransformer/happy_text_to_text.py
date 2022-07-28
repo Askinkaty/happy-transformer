@@ -134,6 +134,9 @@ class HappyTextToText(HappyTransformer):
         """
         self._trainer.train(input_filepath=input_filepath, eval_filepath=eval_filepath, dataclass_args=args)
 
+    def tune_parameters(self, input_filepath, eval_filepath, args=TTTrainArgs()):
+        self._trainer.tune_parameters(input_filepath=input_filepath, eval_filepath=eval_filepath, dataclass_args=args)
+
     def eval(self, input_filepath, args=TTEvalArgs()):
         """
         Evaluated the text-to-text model
