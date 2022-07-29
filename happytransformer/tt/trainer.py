@@ -47,7 +47,7 @@ class TTTrainArgs:
     logging_strategy: str = ""
     logging_steps: int = 20000
     num_samples: int = 5
-    gpus_per_trial: int = 4
+    gpus_per_trial: int = 3
 
 
 @dataclass
@@ -90,7 +90,7 @@ class TTTrainer(HappyTrainer):
         self.__max_input_length = 1024
         self.__max_output_length = 1024
 
-    def tune_parameters(self, input_filepath, eval_filepath, dataclass_args=TTTrainArgs):
+    def tune_parameters(self, model_init, input_filepath, eval_filepath, dataclass_args=TTTrainArgs):
         """
         :param input_filepath: A file path to a csv file that contains two columns: text_1 and text_2
         :param dataclass_args: A TTTrainArgs() object
@@ -167,6 +167,7 @@ class TTTrainer(HappyTrainer):
                 eval_dataset=tokenized_eval_dataset['eval'],
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
+                model_init=model_init,
             )
 
             tune_config = {
