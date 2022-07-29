@@ -136,7 +136,8 @@ class HappyTextToText(HappyTransformer):
 
     def tune_parameters(self, load_path, input_filepath, eval_filepath, args=TTTrainArgs()):
         def model_init():
-            self.model = AutoModelForSeq2SeqLM.from_pretrained(load_path)
+            return AutoModelForSeq2SeqLM.from_pretrained(load_path)
+
         self._trainer.tune_parameters(model_init=model_init,
                                       input_filepath=input_filepath, eval_filepath=eval_filepath, dataclass_args=args)
 
