@@ -186,6 +186,7 @@ class TTTrainer(HappyTrainer):
                     "weight_decay": tune.uniform(0.0, 0.3),
                     "learning_rate": tune.uniform(1e-5, 5e-5),
                 },
+                require_attrs=False
             )
 
             reporter = CLIReporter(
