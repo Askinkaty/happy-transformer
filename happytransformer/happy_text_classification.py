@@ -62,7 +62,7 @@ class HappyTextClassification(HappyTransformer):
 
         return TextClassificationResult(label=first_result["label"], score=first_result["score"])
     
-    def train(self, input_filepath, args=TCTrainArgs()):
+    def train(self, input_filepath, eval_filepath, args=TCTrainArgs()):
         """
         Trains the question answering model
         input_filepath: a string that contains the location of a csv file
@@ -79,7 +79,8 @@ class HappyTextClassification(HappyTransformer):
         else:
             raise ValueError("Invalid args type. Use a TCTrainArgs object or a dictionary")
 
-        self._trainer.train(input_filepath=input_filepath, dataclass_args=method_dataclass_args)
+        self._trainer.train(input_filepath=input_filepath,  eval_filepath=eval_filepath,
+                            dataclass_args=method_dataclass_args)
 
     def eval(self, input_filepath, args=TCEvalArgs()) -> EvalResult:
         """

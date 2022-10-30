@@ -18,7 +18,7 @@ class HappyTrainer:
         self.device = device
         self.logger = logger
 
-    def train(self, input_filepath, args):
+    def train(self, input_filepath,  eval_filepath, args):
         """
 
         :param input_filepath: A string to file location
