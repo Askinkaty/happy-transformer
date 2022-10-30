@@ -67,6 +67,9 @@ class HappyTrainer:
 
         return TrainingArguments(
             output_dir=output_path,
+            resume_from_checkpoint=dataclass_args.resume_from_checkpoint,
+            do_train=True,
+            do_eval=True,
             learning_rate=dataclass_args.learning_rate,
             weight_decay=dataclass_args.weight_decay,
             adam_beta1=dataclass_args.adam_beta1,
@@ -74,14 +77,18 @@ class HappyTrainer:
             adam_epsilon=dataclass_args.adam_epsilon,
             max_grad_norm=dataclass_args.max_grad_norm,
             num_train_epochs=dataclass_args.num_train_epochs,
-            report_to=["none"],
-            save_strategy="no",
-            per_device_train_batch_size=dataclass_args.batch_size,
+            report_to=["wandb"],
+            save_strategy="steps",
+            evaluation_strategy="steps",
+            eval_steps=2000,
+            save_total_limit=5,
             fp16=dataclass_args.fp16,
+            per_device_train_batch_size=dataclass_args.batch_size,
 
         )
 
-    def _run_train(self, dataset, dataclass_args, data_collator):
+
+    def _run_train(self, dataset, eval_dataset, dataclass_args, data_collator):
         """
 
         :param dataset: a child of torch.utils.data.Dataset
@@ -94,10 +101,11 @@ class HappyTrainer:
                 model=self.model,
                 args=training_args,
                 train_dataset=dataset,
+                eval_dataset=eval_dataset,
                 tokenizer=self.tokenizer,
                 data_collator=data_collator,
             )
-            trainer.train()
+            trainer.train(resume_from_checkpoint=dataclass_args.resume_from_checkpoint)
 
     def _run_eval(self, dataset, data_collator, dataclass_args):
         """
