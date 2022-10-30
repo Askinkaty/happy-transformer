@@ -81,7 +81,6 @@ class HappyTrainer:
 
         )
 
-
     def _run_train(self, dataset, dataclass_args, data_collator):
         """
 
@@ -99,6 +98,7 @@ class HappyTrainer:
                 data_collator=data_collator,
             )
             trainer.train()
+
     def _run_eval(self, dataset, data_collator, dataclass_args):
         """
         :param dataset: a child of torch.utils.data.Dataset
