@@ -11,6 +11,7 @@ ARGS_TC_TRAIN = {
     'save_preprocessed_data_path': "",
     'load_preprocessed_data': False,
     'load_preprocessed_data_path': "",
+    "resume_from_checkpoint": False,
     'fp16': False
 
 }
