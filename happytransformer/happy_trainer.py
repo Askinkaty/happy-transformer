@@ -66,7 +66,7 @@ class HappyTrainer:
                 ValueError("fp16 is only available when CUDA/ a GPU is being used. ")
 
         return TrainingArguments(
-            output_dir=output_path,
+            output_dir=dataclass_args.output_dir,
             resume_from_checkpoint=dataclass_args.resume_from_checkpoint,
             do_train=True,
             do_eval=True,
