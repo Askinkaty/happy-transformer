@@ -30,6 +30,7 @@ class TCTrainArgs:
     save_preprocessed_data_path: str = ARGS_TC_TRAIN["save_preprocessed_data_path"]
     load_preprocessed_data: bool = ARGS_TC_TRAIN["load_preprocessed_data"]
     resume_from_checkpoint: bool = ARGS_TC_TRAIN["resume_from_checkpoint"]
+    output_dir: str = ARGS_TC_TRAIN["output_dir"]
     load_preprocessed_data_path: str = ARGS_TC_TRAIN["load_preprocessed_data_path"]
     fp16: bool = ARGS_TC_TRAIN["fp16"]
 
