@@ -40,10 +40,12 @@ class SimpleGPT3SequenceClassifier(nn.Module):
         if gpt_model_name != "":
             tokenizer = AutoTokenizer.from_pretrained(gpt_model_name)
             self.gpt3model.resize_token_embeddings(len(tokenizer))
+        self.config = AutoConfig.from_pretrained(pretrained_model_name_or_path=gpt_model_name, num_labels=num_classes)
         self.pool1 = nn.MaxPool1d(3, stride=5)
         self.pool2 = nn.MaxPool1d(3, stride=5)
         self.fc1 = nn.Linear(402000, hidden_size)
         self.fc2 = nn.Linear(hidden_size, num_classes)
+
 
     def forward(self, x_in):
         #         print(x_in.shape)
