@@ -30,7 +30,6 @@ class SimpleGPT3SequenceClassifier(nn.Module):
             num_classes: int,
             max_seq_len: int,
             gpt_model_name: str,
-            tokenizer: None
     ):
         super(SimpleGPT3SequenceClassifier, self).__init__()
         self.max_seq_len = max_seq_len
@@ -39,7 +38,7 @@ class SimpleGPT3SequenceClassifier(nn.Module):
             gpt_model_name, output_hidden_states=True
         )
         if gpt_model_name != "":
-            self.tokenizer = AutoTokenizer.from_pretrained(gpt_model_name)
+            tokenizer = AutoTokenizer.from_pretrained(gpt_model_name)
             self.gpt3model.resize_token_embeddings(len(tokenizer))
         self.pool1 = nn.MaxPool1d(3, stride=5)
         self.pool2 = nn.MaxPool1d(3, stride=5)
