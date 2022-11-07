@@ -39,6 +39,7 @@ class SimpleGPT3SequenceClassifier(nn.Module):
         )
         if gpt_model_name != "":
             tokenizer = AutoTokenizer.from_pretrained(gpt_model_name)
+            tokenizer.pad_token = tokenizer.eos_token
             self.gpt3model.resize_token_embeddings(len(tokenizer))
         self.config = AutoConfig.from_pretrained(pretrained_model_name_or_path=gpt_model_name, num_labels=num_classes)
         self.pool1 = nn.MaxPool1d(3, stride=5)
