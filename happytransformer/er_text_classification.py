@@ -38,7 +38,9 @@ class SimpleGPT3SequenceClassifier(nn.Module):
         self.gpt3model = AutoModelWithLMHead.from_pretrained(
             gpt_model_name, output_hidden_states=True
         )
-        self.gpt3model.resize_token_embeddings(len(tokenizer))
+        if gpt_model_name != "":
+            self.tokenizer = AutoTokenizer.from_pretrained(gpt_model_name)
+            self.gpt3model.resize_token_embeddings(len(tokenizer))
         self.pool1 = nn.MaxPool1d(3, stride=5)
         self.pool2 = nn.MaxPool1d(3, stride=5)
         self.fc1 = nn.Linear(402000, hidden_size)
