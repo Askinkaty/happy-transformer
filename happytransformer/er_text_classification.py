@@ -83,9 +83,10 @@ class HappyTextClassification(HappyTransformer):
     """
 
     def __init__(self, model_type="GPT",
-                 model_name="", num_labels: int = 2, hidden_size: int = 1536,
-                 load_path: str = "", max_len: int = 200,
-                 use_auth_token: str = None):
+                 model_name="", num_labels: int = 2,
+                 load_path: str = "",
+                 use_auth_token: str = None, max_len: int = 200,
+                 hidden_size: int = 1536):
         self.adaptor = get_adaptor(model_type)
 
         model = SimpleGPT3SequenceClassifier(

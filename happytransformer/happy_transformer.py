@@ -15,7 +15,8 @@ class HappyTransformer():
 
     """
 
-    def __init__(self, model_type, model_name, model, load_path="", use_auth_token: str = None):
+    def __init__(self, model_type, model_name, model, load_path="", use_auth_token: str = None,
+                 max_len: int = None, hidden_size: int = None):
         self.model_type = model_type  # BERT, #DISTILBERT, ROBERTA, ALBERT etc
         self.model_name = model_name
 
