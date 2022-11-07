@@ -77,7 +77,7 @@ class SimpleGPT3SequenceClassifier(nn.Module):
         return prediction_vector
 
 
-class HappyTextClassification(HappyTransformer):
+class ErrTextClassification(HappyTransformer):
     """
     A user facing class for Text Classification
     """
