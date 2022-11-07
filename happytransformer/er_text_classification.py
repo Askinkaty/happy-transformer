@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from transformers import TextClassificationPipeline, AutoConfig, AutoModelForSequenceClassification
 from transformers import AutoTokenizer, AutoModelWithLMHead
+from transformers import GPT2Tokenizer, GPT2Model, GPT2Config
 
 from happytransformer.tc.trainer import TCTrainer, TCTrainArgs, TCEvalArgs, TCTestArgs
 from happytransformer.cuda_detect import detect_cuda_device_number
@@ -35,12 +36,12 @@ class SimpleGPT3SequenceClassifier(nn.Module):
         super(SimpleGPT3SequenceClassifier, self).__init__()
         self.max_seq_len = max_seq_len
         self.hidden_size = hidden_size
-        self.gpt3model = AutoModelWithLMHead.from_pretrained(
+        self.gpt3model = GPT2Model.from_pretrained(
             gpt_model_name, output_hidden_states=True
         )
         if gpt_model_name != "":
             self.gpt3model.resize_token_embeddings(len(tokenizer))
-        self.config = AutoConfig.from_pretrained(pretrained_model_name_or_path=gpt_model_name, num_labels=num_classes)
+        self.config = GPT2Config.from_pretrained(pretrained_model_name_or_path=gpt_model_name, num_labels=num_classes)
         self.pool1 = nn.MaxPool1d(3, stride=5)
         self.pool2 = nn.MaxPool1d(3, stride=5)
         self.fc1 = nn.Linear(402000, hidden_size)
@@ -90,8 +91,8 @@ class ErrTextClassification(HappyTransformer):
                  load_path: str = "",
                  use_auth_token: str = None, max_len: int = 200,
                  hidden_size: int = 1536):
-        self.adaptor = get_adaptor(model_type)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+        self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
         model = SimpleGPT3SequenceClassifier(

@@ -22,9 +22,9 @@ class HappyTransformer():
 
         if load_path != "":
             self.tokenizer = AutoTokenizer.from_pretrained(load_path)
-            self.tokenizer.pad_token = self.tokenizer.eos_token
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=use_auth_token)
+
         self.model = model
         self.model.eval()
         self._trainer = None  # initialized in child class
