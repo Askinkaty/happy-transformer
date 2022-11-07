@@ -30,6 +30,7 @@ class SimpleGPT3SequenceClassifier(nn.Module):
             num_classes: int,
             max_seq_len: int,
             gpt_model_name: str,
+            tokenizer: None
     ):
         super(SimpleGPT3SequenceClassifier, self).__init__()
         self.max_seq_len = max_seq_len
@@ -38,8 +39,6 @@ class SimpleGPT3SequenceClassifier(nn.Module):
             gpt_model_name, output_hidden_states=True
         )
         if gpt_model_name != "":
-            tokenizer = AutoTokenizer.from_pretrained(gpt_model_name)
-            tokenizer.pad_token = tokenizer.eos_token
             self.gpt3model.resize_token_embeddings(len(tokenizer))
         self.config = AutoConfig.from_pretrained(pretrained_model_name_or_path=gpt_model_name, num_labels=num_classes)
         self.pool1 = nn.MaxPool1d(3, stride=5)
@@ -92,12 +91,15 @@ class ErrTextClassification(HappyTransformer):
                  use_auth_token: str = None, max_len: int = 200,
                  hidden_size: int = 1536):
         self.adaptor = get_adaptor(model_type)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.tokenizer.pad_token = self.tokenizer.eos_token
 
         model = SimpleGPT3SequenceClassifier(
             hidden_size=hidden_size,
             num_classes=num_labels,
             gpt_model_name=model_name,
-            max_seq_len=max_len)
+            max_seq_len=max_len,
+            tokenizer=self.tokenizer)
 
         super().__init__(model_type, model_name, model, use_auth_token=use_auth_token, load_path=load_path)
 
