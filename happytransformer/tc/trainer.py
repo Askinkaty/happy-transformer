@@ -61,8 +61,8 @@ class TCTrainer(HappyTrainer):
             self.logger.info("Preprocessing dataset...")
             contexts, labels = self._get_data(input_filepath)
             eval_contexts, eval_labels = self._get_data(eval_filepath)
-            train_encodings = self.tokenizer(contexts, truncation=True, padding=True)
-            eval_encodings = self.tokenizer(contexts, truncation=True, padding=True)
+            train_encodings = self.tokenizer(contexts, truncation=False, padding=True)
+            eval_encodings = self.tokenizer(contexts, truncation=False, padding=True)
         else:
             self.logger.info("Loading dataset from %s...", dataclass_args.load_preprocessed_data_path)
             train_encodings, labels = self._get_preprocessed_data(dataclass_args.load_preprocessed_data_path)
@@ -84,7 +84,7 @@ class TCTrainer(HappyTrainer):
         if not dataclass_args.load_preprocessed_data:
             self.logger.info("Preprocessing dataset...")
             contexts, labels = self._get_data(input_filepath)
-            eval_encodings = self.tokenizer(contexts, truncation=True, padding=True)
+            eval_encodings = self.tokenizer(contexts, truncation=False, padding=True)
         else:
             self.logger.info("Loading dataset from %s...", dataclass_args.load_preprocessed_data_path)
             eval_encodings, labels = self._get_preprocessed_data(dataclass_args.load_preprocessed_data_path)
