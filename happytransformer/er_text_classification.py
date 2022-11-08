@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from transformers import TextClassificationPipeline, AutoConfig, AutoModelForSequenceClassification
 from transformers import AutoTokenizer, AutoModelWithLMHead
-from transformers import GPT2Tokenizer, GPT2Model, GPT2Config
+from transformers import GPT2Tokenizer, GPT2Model, GPT2Config, GPT2ForErrSequenceClassification
 
 from happytransformer.tc.trainer import TCTrainer, TCTrainArgs, TCEvalArgs, TCTestArgs
 from happytransformer.cuda_detect import detect_cuda_device_number
@@ -95,12 +95,12 @@ class ErrTextClassification(HappyTransformer):
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        model = SimpleGPT3SequenceClassifier(
-            hidden_size=hidden_size,
-            num_classes=num_labels,
-            gpt_model_name=model_name,
-            max_seq_len=max_len,
-            tokenizer=self.tokenizer)
+        model_config = GPT2Config.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2",
+                                                  num_labels=num_labels)
+        model = GPT2ForErrSequenceClassification.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2", config=model_config)
+
+        model.resize_token_embeddings(len(self.tokenizer))
+        model.config.pad_token_id = model.config.eos_token_id
 
         super().__init__(model_type, model_name, model, use_auth_token=use_auth_token, load_path=load_path)
 

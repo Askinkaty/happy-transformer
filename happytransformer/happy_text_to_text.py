@@ -99,9 +99,11 @@ class HappyTextToText(HappyTransformer):
             encoder_input_ids.repeat_interleave(args.num_beams, dim=0), return_dict=True)}
         outputs = self.model.beam_search(input_ids, self.beam_scorer,  output_scores=True,
                                          logits_processor=self.logits_processor,
+                                         return_dict_in_generate=True,
                                          stopping_criteria=stopping_criteria, **model_kwargs)
-        out = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        return out
+        out = self.tokenizer.batch_decode(outputs.get('sequences'), skip_special_tokens=True,
+                                          clean_up_tokenization_spaces=False)
+        return out, outputs.get('sequences_scores')
 
     def generate_text(self, text: str,
                       args: TTSettings = TTSettings()) -> TextToTextResult:

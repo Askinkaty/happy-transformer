@@ -17,6 +17,7 @@ import tempfile
 from ray.tune.schedulers import PopulationBasedTraining
 from ray import tune
 from ray.tune import CLIReporter
+import wandb
 
 
 @dataclass
@@ -24,9 +25,13 @@ class TTTrainArgs:
     """
     Used to adjust the settings when calling HappyTextToText.train()
     """
-    learning_rate: float = 5e-5
-    num_train_epochs: int = 5
-    weight_decay: float = 0
+    
+    #learning_rate: float = 5e-5
+    learning_rate: float = 3.83229e-05
+    #num_train_epochs: int = 5
+    num_train_epochs: int = 2
+    #weight_decay: float = 0
+    weight_decay: float = 0.180335
     adam_beta1: float = 0.9
     adam_beta2: float = 0.999
     adam_epsilon: float = 1e-8
@@ -45,7 +50,7 @@ class TTTrainArgs:
     generation_num_beams: int = 5
     logging_dir: str = ""
     logging_strategy: str = ""
-    logging_steps: int = 20000
+    logging_steps: int = 2000 #50
     num_samples: int = 5
     gpus_per_trial: int = 3
 
@@ -152,7 +157,7 @@ class TTTrainer(HappyTrainer):
                 save_strategy="steps",
                 evaluation_strategy="steps",
                 eval_steps=20000,
-                save_total_limit=5,
+                save_total_limit=7,
                 per_device_train_batch_size=dataclass_args.batch_size,
                 fp16=True,
                 logging_dir=dataclass_args.logging_dir,
@@ -185,6 +190,8 @@ class TTTrainer(HappyTrainer):
                 hyperparam_mutations={
                     "weight_decay": tune.uniform(0.0, 0.3),
                     "learning_rate": tune.uniform(1e-5, 5e-5),
+                   # "max_grad_norm": tune.uniform(0.0, 1.0), # new
+                   #"adam_epsilon": tune.uniform(0.0, 0.3) # new
                 },
                 require_attrs=False
             )
@@ -194,6 +201,8 @@ class TTTrainer(HappyTrainer):
                     "weight_decay": "w_decay",
                     "learning_rate": "lr",
                     "num_train_epochs": "num_epochs",
+                    #"max_grad_norm": "max_grad_norm",
+                    #"adam_epsilon": "adam_eps"
                 },
                 metric_columns=["eval_acc", "eval_loss", "epoch", "training_iteration"],
             )
@@ -271,16 +280,18 @@ class TTTrainer(HappyTrainer):
                 adam_epsilon=dataclass_args.adam_epsilon,
                 max_grad_norm=dataclass_args.max_grad_norm,
                 num_train_epochs=dataclass_args.num_train_epochs,
-                report_to=["none"],
+                report_to="wandb",
                 save_strategy="steps",
                 evaluation_strategy="steps",
-                eval_steps=20000,
+                eval_steps=2000, #50,
                 save_total_limit=5,
                 per_device_train_batch_size=dataclass_args.batch_size,
                 fp16=True,
                 logging_dir=dataclass_args.logging_dir,
                 logging_strategy="steps",
-                logging_steps=20000,
+                logging_steps=2000, #50,
+                #gradient_accumulation_steps=4,
+                #gradient_checkpointing=True
             )
 
             trainer = Seq2SeqTrainer(
@@ -328,10 +339,10 @@ class TTTrainer(HappyTrainer):
                 per_device_eval_batch_size=dataclass_args.batch_size,
                 logging_dir=dataclass_args.logging_dir,
                 logging_strategy="steps",
-                logging_steps=20000,
+                logging_steps=20000,#50,
                 save_strategy="steps",
                 evaluation_strategy="steps",
-                eval_steps=20000,
+                eval_steps=20000#50,
             )
 
             trainer = Seq2SeqTrainer(
