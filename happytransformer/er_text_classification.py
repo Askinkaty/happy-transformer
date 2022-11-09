@@ -111,7 +111,11 @@ class ErrTextClassification(HappyTransformer):
             model=model, tokenizer=self.tokenizer,
             device=device_number
         )
-
+        print(self.tokenizer)
+        print(self.tokenizer.pad_token)
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.padding_side = 'left'
+        print(self.tokenizer.pad_token)
         self._trainer = TCTrainer(
             model, model_type,
             self.tokenizer, self._device, self.logger
