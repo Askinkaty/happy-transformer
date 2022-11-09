@@ -113,7 +113,7 @@ class ErrTextClassification(HappyTransformer):
         )
 
         self._trainer = TCTrainer(
-            self.model, self.model_type,
+            model, model_type,
             self.tokenizer, self._device, self.logger
         )
 
