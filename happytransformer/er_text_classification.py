@@ -93,17 +93,11 @@ class ErrTextClassification(HappyTransformer):
                  hidden_size: int = 1536):
 
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-        print(self.tokenizer.eos_token)
-        self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.tokenizer.padding_side = 'left'
-        print(self.tokenizer.pad_token)
+
         model_config = GPT2Config.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2",
                                                   num_labels=num_labels)
         model = GPT2ForErrSequenceClassification.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2", config=model_config)
 
-        model.resize_token_embeddings(len(self.tokenizer))
-        model.config.pad_token_id = model.config.eos_token_id
-        print(model.config.pad_token_id)
         super().__init__(model_type, model_name, model, use_auth_token=use_auth_token, load_path=load_path)
 
         device_number = detect_cuda_device_number()
@@ -111,11 +105,12 @@ class ErrTextClassification(HappyTransformer):
             model=model, tokenizer=self.tokenizer,
             device=device_number
         )
-        print(self.tokenizer)
-        print(self.tokenizer.pad_token)
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.padding_side = 'left'
-        print(self.tokenizer.pad_token)
+        model.resize_token_embeddings(len(self.tokenizer))
+        model.config.pad_token_id = model.config.eos_token_id
+        print(model.config.pad_token_id)
+
         self._trainer = TCTrainer(
             model, model_type,
             self.tokenizer, self._device, self.logger
