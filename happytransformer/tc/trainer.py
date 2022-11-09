@@ -33,6 +33,7 @@ class TCTrainArgs:
     output_dir: str = ARGS_TC_TRAIN["output_dir"]
     load_preprocessed_data_path: str = ARGS_TC_TRAIN["load_preprocessed_data_path"]
     fp16: bool = ARGS_TC_TRAIN["fp16"]
+    max_len: int = ARGS_TC_TRAIN['max_len']
 
 
 @dataclass
@@ -42,6 +43,7 @@ class TCEvalArgs:
     load_preprocessed_data: bool = ARGS_TC_EVAL["load_preprocessed_data"]
     load_preprocessed_data_path: str = ARGS_TC_EVAL["load_preprocessed_data_path"]
     batch_size: int = ARGS_TC_EVAL["batch_size"]
+    max_len: int = ARGS_TC_TRAIN['max_len']
 
 
 @dataclass
@@ -50,6 +52,7 @@ class TCTestArgs:
     save_preprocessed_data_path: str = ARGS_TC_TEST["save_preprocessed_data_path"]
     load_preprocessed_data: bool = ARGS_TC_TEST["load_preprocessed_data"]
     load_preprocessed_data_path: str = ARGS_TC_TEST["load_preprocessed_data_path"]
+    max_len: int = ARGS_TC_TRAIN['max_len']
 
 
 class TCTrainer(HappyTrainer):
@@ -62,8 +65,10 @@ class TCTrainer(HappyTrainer):
             self.logger.info("Preprocessing dataset...")
             contexts, labels = self._get_data(input_filepath)
             eval_contexts, eval_labels = self._get_data(eval_filepath)
-            train_encodings = self.tokenizer(contexts, truncation=False, padding=True)
-            eval_encodings = self.tokenizer(contexts, truncation=False, padding=True)
+            train_encodings = self.tokenizer(contexts, truncation=False, padding='max_length',
+                                             max_length=dataclass_args.max_len)
+            eval_encodings = self.tokenizer(contexts, truncation=False, padding='max_length',
+                                            max_length=dataclass_args.max_len)
         else:
             self.logger.info("Loading dataset from %s...", dataclass_args.load_preprocessed_data_path)
             train_encodings, labels = self._get_preprocessed_data(dataclass_args.load_preprocessed_data_path)
@@ -85,7 +90,8 @@ class TCTrainer(HappyTrainer):
         if not dataclass_args.load_preprocessed_data:
             self.logger.info("Preprocessing dataset...")
             contexts, labels = self._get_data(input_filepath)
-            eval_encodings = self.tokenizer(contexts, truncation=False, padding=True)
+            eval_encodings = self.tokenizer(contexts, truncation=False, padding='max_length',
+                                            max_length=dataclass_args.max_len)
         else:
             self.logger.info("Loading dataset from %s...", dataclass_args.load_preprocessed_data_path)
             eval_encodings, labels = self._get_preprocessed_data(dataclass_args.load_preprocessed_data_path)
