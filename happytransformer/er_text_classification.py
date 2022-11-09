@@ -108,7 +108,7 @@ class ErrTextClassification(HappyTransformer):
 
         device_number = detect_cuda_device_number()
         self._pipeline = TextClassificationPipeline(
-            model=self.model, tokenizer=self.tokenizer,
+            model=model, tokenizer=self.tokenizer,
             device=device_number
         )
 

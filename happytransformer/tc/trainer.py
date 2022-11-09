@@ -61,6 +61,10 @@ class TCTrainer(HappyTrainer):
             self.logger.info("Preprocessing dataset...")
             contexts, labels = self._get_data(input_filepath)
             eval_contexts, eval_labels = self._get_data(eval_filepath)
+            print(self.tokenizer.eos_token)
+            print(self.tokenizer.pad_token)
+            print(self.model.config.pad_token_id)
+
             train_encodings = self.tokenizer(contexts, truncation=False, padding=True)
             eval_encodings = self.tokenizer(contexts, truncation=False, padding=True)
         else:
