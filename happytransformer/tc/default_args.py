@@ -13,7 +13,8 @@ ARGS_TC_TRAIN = {
     'load_preprocessed_data_path': "",
     "resume_from_checkpoint": False,
     "output_dir": "",
-    'fp16': False
+    'fp16': False,
+    'max_len': 200
 
 }
 
@@ -23,6 +24,7 @@ ARGS_TC_EVAL = {
     'save_preprocessed_data_path': "",
     'load_preprocessed_data': False,
     'load_preprocessed_data_path': "",
+    'max_len': 200
 }
 
 ARGS_TC_TEST = {
@@ -30,5 +32,6 @@ ARGS_TC_TEST = {
     'save_preprocessed_data_path': "",
     'load_preprocessed_data': False,
     'load_preprocessed_data_path': "",
+    'max_len': 200
 }
 
