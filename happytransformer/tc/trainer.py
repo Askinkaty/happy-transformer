@@ -34,6 +34,9 @@ class TCTrainArgs:
     load_preprocessed_data_path: str = ARGS_TC_TRAIN["load_preprocessed_data_path"]
     fp16: bool = ARGS_TC_TRAIN["fp16"]
     max_len: int = ARGS_TC_TRAIN['max_len']
+    logging_dir: str = ARGS_TC_TRAIN['logging_dir']
+    logging_strategy: str = ARGS_TC_TRAIN['logging_strategy']
+    logging_steps: int = 2000
 
 
 @dataclass
