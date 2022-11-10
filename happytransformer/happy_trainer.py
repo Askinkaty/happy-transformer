@@ -84,6 +84,9 @@ class HappyTrainer:
             save_total_limit=5,
             fp16=dataclass_args.fp16,
             per_device_train_batch_size=dataclass_args.batch_size,
+            logging_dir=dataclass_args.logging_dir,
+            logging_strategy="steps",
+            logging_steps=2000,
 
         )
 
