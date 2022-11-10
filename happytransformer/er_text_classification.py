@@ -97,6 +97,8 @@ class ErrTextClassification(HappyTransformer):
         model_config = GPT2Config.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2",
                                                   num_labels=num_labels)
         model = GPT2ForErrSequenceClassification.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2", config=model_config)
+        for param in model.base_model.parameters():
+            param.requires_grad = False
 
         super().__init__(model_type, model_name, model, use_auth_token=use_auth_token, load_path=load_path)
 
