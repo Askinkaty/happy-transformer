@@ -111,7 +111,6 @@ class ErrTextClassification(HappyTransformer):
         self.tokenizer.padding_side = 'left'
         model.resize_token_embeddings(len(self.tokenizer))
         model.config.pad_token_id = model.config.eos_token_id
-        print(model.config.pad_token_id)
 
         self._trainer = TCTrainer(
             model, model_type,
@@ -179,7 +178,7 @@ class ErrTextClassification(HappyTransformer):
 
         return self._trainer.eval(input_filepath=input_filepath, dataclass_args=method_dataclass_args)
 
-    def test(self, input_filepath, args=TCTestArgs()):
+    def test(self, input_filepath, out_filepath, args=TCTestArgs()):
         """
         Tests the text classification  model. Used to obtain results
         input_filepath: a string that contains the location of a csv file
@@ -197,5 +196,10 @@ class ErrTextClassification(HappyTransformer):
         else:
             raise ValueError("Invalid args type. Use a TCTestArgs() object or a dictionary")
 
-        return self._trainer.test(input_filepath=input_filepath, solve=self.classify_text,
-                                  dataclass_args=method_dataclass_args)
+        result = self._trainer.test(input_filepath=input_filepath, solve=self.classify_text,
+                                    dataclass_args=method_dataclass_args)
+        with open(out_filepath, 'w') as out:
+            for r in result:
+                print(r)
+                out.write(r)
+                out.write('\n')
