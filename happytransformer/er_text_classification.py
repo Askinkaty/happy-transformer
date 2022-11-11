@@ -200,6 +200,5 @@ class ErrTextClassification(HappyTransformer):
                                     dataclass_args=method_dataclass_args)
         with open(out_filepath, 'w') as out:
             for r in result:
-                print(r)
-                out.write(r)
+                print(str(r.label), '\t', str(r.score))
                 out.write('\n')
