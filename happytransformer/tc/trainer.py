@@ -89,6 +89,33 @@ class TCTrainer(HappyTrainer):
         data_collator = DataCollatorWithPadding(self.tokenizer)
         self._run_train(train_dataset, eval_dataset, dataclass_args, data_collator)
 
+    def tune_parameters(self, model_init, input_filepath, eval_filepath, dataclass_args=TCTrainArgs):
+        if not dataclass_args.load_preprocessed_data:
+            self.logger.info("Preprocessing dataset...")
+            contexts, labels = self._get_data(input_filepath)
+            eval_contexts, eval_labels = self._get_data(eval_filepath)
+            train_encodings = self.tokenizer(contexts, truncation=False, padding='max_length',
+                                             max_length=dataclass_args.max_len)
+            eval_encodings = self.tokenizer(contexts, truncation=False, padding='max_length',
+                                            max_length=dataclass_args.max_len)
+        else:
+            self.logger.info("Loading dataset from %s...", dataclass_args.load_preprocessed_data_path)
+            train_encodings, labels = self._get_preprocessed_data(dataclass_args.load_preprocessed_data_path)
+            eval_encodings, eval_labels = self._get_preprocessed_data(dataclass_args.load_preprocessed_data_path)
+
+        if dataclass_args.save_preprocessed_data:
+            self.logger.info("Saving training dataset to %s...", dataclass_args.save_preprocessed_data_path)
+            input_ids = train_encodings["input_ids"]
+            attention_mask = train_encodings["attention_mask"]
+            self._generate_json(dataclass_args.save_preprocessed_data_path, input_ids, attention_mask, labels, "train")
+
+        train_dataset = TextClassificationDataset(train_encodings, labels)
+        eval_dataset = TextClassificationDataset(eval_encodings, eval_labels)
+
+        data_collator = DataCollatorWithPadding(self.tokenizer)
+        self._run_tune(train_dataset, eval_dataset, dataclass_args, data_collator, model_init)
+
+
     def eval(self, input_filepath, dataclass_args: TCEvalArgs):
         if not dataclass_args.load_preprocessed_data:
             self.logger.info("Preprocessing dataset...")

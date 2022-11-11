@@ -92,8 +92,8 @@ class ErrTextClassification(HappyTransformer):
                  use_auth_token: str = None, max_len: int = 200,
                  hidden_size: int = 1536):
 
+        self.max_len = max_len
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-
         model_config = GPT2Config.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2",
                                                   num_labels=num_labels)
         model = GPT2ForErrSequenceClassification.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2", config=model_config)
@@ -125,7 +125,7 @@ class ErrTextClassification(HappyTransformer):
         # Blocking allowing a for a list of strings
         if not isinstance(text, str):
             raise ValueError("the \"text\" argument must be a single string")
-        results = self._pipeline(text)
+        results = self._pipeline(text, truncation=False, padding='max_length', max_length=self.max_len)
         # we do not support predicting a list of  texts, so only first prediction is relevant
         first_result = results[0]
 
@@ -150,6 +150,14 @@ class ErrTextClassification(HappyTransformer):
 
         self._trainer.train(input_filepath=input_filepath, eval_filepath=eval_filepath,
                             dataclass_args=method_dataclass_args)
+
+    def tune_parameters(self, input_filepath, eval_filepath, args=TCTrainArgs()):
+        def model_init():
+            return GPT2ForErrSequenceClassification.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2")
+
+        self._trainer.tune_parameters(model_init=model_init,
+                                      input_filepath=input_filepath, eval_filepath=eval_filepath, dataclass_args=args)
+
 
     def eval(self, input_filepath, args=TCEvalArgs()) -> EvalResult:
         """

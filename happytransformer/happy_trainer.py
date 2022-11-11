@@ -5,7 +5,9 @@ import torch
 from dataclasses import dataclass
 import tempfile
 from transformers import TrainingArguments, Trainer
-
+from ray.tune.schedulers import PopulationBasedTraining
+from ray import tune
+from ray.tune import CLIReporter
 @dataclass
 class EvalResult:
     loss: float
@@ -90,6 +92,69 @@ class HappyTrainer:
 
         )
 
+
+    def _run_tune(self,  dataset, eval_dataset, dataclass_args, data_collator, model_init):
+        """
+
+                :param dataset: a child of torch.utils.data.Dataset
+                :param dataclass_args: a dataclass that contains settings
+                :return: None
+                """
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            training_args = self._get_training_args(dataclass_args, tmp_dir_name)
+            trainer = Trainer(
+                model=self.model,
+                args=training_args,
+                train_dataset=dataset,
+                eval_dataset=eval_dataset,
+                tokenizer=self.tokenizer,
+                data_collator=data_collator,
+            )
+            tune_config = {
+                "per_device_train_batch_size": 8,
+                "per_device_eval_batch_size": 8,
+                "num_train_epochs": tune.choice([2, 3, 4, 5]),
+                "max_steps": -1,
+            }
+            scheduler = PopulationBasedTraining(
+                time_attr="training_iteration",
+                metric="eval_acc",
+                mode="max",
+                perturbation_interval=1,
+                hyperparam_mutations={
+                    "weight_decay": tune.uniform(0.0, 0.3),
+                    "learning_rate": tune.uniform(1e-5, 5e-5),
+                    # "max_grad_norm": tune.uniform(0.0, 1.0), # new
+                    # "adam_epsilon": tune.uniform(0.0, 0.3) # new
+                },
+                require_attrs=False
+            )
+
+            reporter = CLIReporter(
+                parameter_columns={
+                    "weight_decay": "w_decay",
+                    "learning_rate": "lr",
+                    "num_train_epochs": "num_epochs",
+                    # "max_grad_norm": "max_grad_norm",
+                    # "adam_epsilon": "adam_eps"
+                },
+                metric_columns=["eval_acc", "eval_loss", "epoch", "training_iteration"],
+            )
+
+            trainer.hyperparameter_search(
+                hp_space=lambda _: tune_config,
+                backend="ray",
+                n_trials=dataclass_args.num_samples,
+                resources_per_trial={"cpu": 1, "gpu": dataclass_args.gpus_per_trial},
+                scheduler=scheduler,
+                keep_checkpoints_num=1,
+                checkpoint_score_attr="training_iteration",
+                stop=None,
+                progress_reporter=reporter,
+                local_dir="/scratch/project_2002016/ray_results/",
+                name="tune_transformer_pbt",
+                log_to_file=True,
+            )
 
     def _run_train(self, dataset, eval_dataset, dataclass_args, data_collator):
         """
