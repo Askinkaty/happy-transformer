@@ -89,13 +89,13 @@ class ErrTextClassification(HappyTransformer):
     def __init__(self, model_type="GPT",
                  model_name="", num_labels: int = 2,
                  load_path: str = "",
-                 use_auth_token: str = None, max_len: int = 200,
+                 use_auth_token: str = None, max_len: int = 500,
                  hidden_size: int = 1536):
 
         self.max_len = max_len
         self.tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         model_config = GPT2Config.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2",
-                                                  num_labels=num_labels)
+                                                  num_labels=num_labels, problem_type='regression')
         model = GPT2ForErrSequenceClassification.from_pretrained(pretrained_model_name_or_path="sberbank-ai/rugpt3large_based_on_gpt2", config=model_config)
         for param in model.base_model.parameters():
             param.requires_grad = False

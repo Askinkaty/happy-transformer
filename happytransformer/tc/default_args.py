@@ -14,7 +14,7 @@ ARGS_TC_TRAIN = {
     "resume_from_checkpoint": False,
     "output_dir": "",
     'fp16': False,
-    'max_len': 200,
+    'max_len': 500,
     'logging_dir': "",
     'logging_strategy': "",
     'logging_steps': 2000
