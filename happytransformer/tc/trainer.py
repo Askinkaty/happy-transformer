@@ -16,6 +16,8 @@ from tqdm import tqdm
 from happytransformer.tc.default_args import ARGS_TC_TRAIN, ARGS_TC_EVAL, ARGS_TC_TEST
 import json
 
+import random
+
 @dataclass
 class TCTrainArgs:
     learning_rate: float = ARGS_TC_TRAIN["learning_rate"]
@@ -160,14 +162,23 @@ class TCTrainer(HappyTrainer):
         """
         contexts = []
         labels = []
+        all_seq = []
         with open(filepath, newline='', encoding="utf-8") as csv_file:
             reader = csv.DictReader(csv_file)
             for row in reader:
-                contexts.append(row['text'])
+                r = row['text']
+                # contexts.append(row['text'])
                 if not test_data:
-                    labels.append(int(row['label']))
+                    all_seq.append((r, float(row['label'])))
+                else:
+                    all_seq.append((r, None))
+                    # labels.append(int(row['label']))
+                    # labels.append(float(row['label']))
         csv_file.close()
-
+        random.shuffle(all_seq)
+        for s in all_seq:
+            contexts.append(s[0])
+            labels.append(s[1])
         if not test_data:
             return contexts, labels
         return contexts
