@@ -167,11 +167,12 @@ class TCTrainer(HappyTrainer):
             reader = csv.DictReader(csv_file)
             for row in reader:
                 r = row['text']
+                hyp_seq = '<|endoftext|>' + r.split('TL;DR:')[1]
                 # contexts.append(row['text'])
                 if not test_data:
-                    all_seq.append((r, float(row['label'])))
+                    all_seq.append((hyp_seq, float(row['label'])))
                 else:
-                    all_seq.append((r, None))
+                    all_seq.append((hyp_seq, None))
                     # labels.append(int(row['label']))
                     # labels.append(float(row['label']))
         csv_file.close()
